@@ -41,24 +41,32 @@ book(the_lord_of_the_rings, t, f, s(s(s(s(s(s(zero))))))).
 
 
 % Signature: max_list(Lst, Max)/2
-% Purpose: true if Max is the maximum church number in Lst, false if Lst is emoty.
+% Purpose: true if Max is the maximum church number in Lst, false if Lst is empty.
+max_list([], _):-false.
+max_list([X],X).
+max_list([H|T], Max):- max_list(T, M1), max_element(H, M1, Max).
 
 
-
-
-
+% Signature: max_element(X,Y,M)/3
+% Purpose: true if M is the maximum church number among X and Y.
+max_element(zero,X,X).
+max_element(X,zero,X).
+max_element(s(X),s(Y),s(M)):- max_element(X,Y,M).
 
 
 
 % Signature: author_of_genre(GenreName, AuthorName)/2
 % Purpose: true if an author by the name AuthorName has written a book belonging to the genre named GenreName.
-
-
-
-
-
-
+author_of_genre(GenreName, AuthorName) :-
+    genre(GenreId, GenreName),
+    book(_, AuthorId, GenreId, _),
+    author(AuthorId, AuthorName).
 
 
 % Signature: longest_book(AuthorName, BookName)/2
 % Purpose: true if the longest book that an author by the name AuthorName has written is titled BookName.
+longest_book(AuthorName, BookName) :-
+    author(AuthorId, AuthorName),
+    findall(Length, book(_, AuthorId, _, Length), Lengths),
+    max_list(Lengths, MaxLength),
+    book(BookName, AuthorId, _, MaxLength).
