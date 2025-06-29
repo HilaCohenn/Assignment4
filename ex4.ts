@@ -1,9 +1,28 @@
 //Q1
 export function all<T>(promises : Array<Promise<T>>) : Promise<Array<T>> {
+  return new Promise<T[]>((resolve, reject) => {
+    const results: T[] = [];
+    let completed = 0;
 
-  return new Promise<T[]>( (resolve, reject) => {
-    resolve([]);
-    //TODO
+    if (promises.length === 0) {
+      resolve([]);
+      return;
+    }
+
+    promises.forEach((promise, i) => {
+      promise.then(
+        value => {
+          results[i] = value;
+          completed++;
+          if (completed === promises.length) {
+            resolve(results);
+          }
+        },
+        err => {
+          reject(err);
+        }
+      );
+    });
   });
 }
 
