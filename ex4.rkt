@@ -48,24 +48,73 @@
 ;;; Q3.1
 ; Signature: append$(lst1, lst2, cont) 
 ; Type: [List * List * [List -> T]] -> T
-; Purpose: Returns the concatination of the given two lists, with cont pre-processing
+; Purpose: Returns the concatenation of the given two lists, with cont post-processing
 (define append$
   (lambda (lst1 lst2 cont)
-    #f ;@TODO
-  )
-)
+    (let loop ((x lst1) (k cont))
+      (if (empty? x)
+          (k lst2)
+          (loop (cdr x)
+                (lambda (r)
+                  (k (cons (car x) r))))))))
+
 
 ;;; Q3.2
 ; Signature: equal-trees$(tree1, tree2, succ, fail) 
-; Type: [Tree * Tree * [Tree ->T1] * [Pair->T2] -> T1 U T2
-; Purpose: Determines the structure identity of a given two lists, with post-processing succ/fail
-(define equal-trees$ 
+; Type: [Tree * Tree * [Tree ->T1] * [Pair->T2] -> T1 U T2]
+; Purpose: Determines structural identity of two trees with CPS
+(define equal-trees$
   (lambda (tree1 tree2 succ fail)
-    #f ;@TODO
-  )
-)
+    (cond
+      ;; both leaves
+      [(and (not (pair? tree1)) (not (pair? tree2)))
+       (succ (cons tree1 tree2))]
+
+      ;; one is a pair, the other is not => structure mismatch
+      [(or (and (pair? tree1) (not (pair? tree2)))
+           (and (not (pair? tree1)) (pair? tree2)))
+       (fail (append (flatten-leaf1 tree1) (flatten-leaf1 tree2)))]
+
+      ;; both are lists — traverse recursively
+      [(and (pair? tree1) (pair? tree2))
+       (let loop ((xs tree1) (ys tree2) (acc '()))
+         (cond
+           [(and (null? xs) (null? ys)) (succ (reverse acc))]
+           [(or (null? xs) (null? ys))
+            (fail (append (flatten-leaf1 xs) (flatten-leaf1 ys)))]
+           [else
+            (equal-trees$
+             (car xs) (car ys)
+             (lambda (res) (loop (cdr xs) (cdr ys) (cons res acc)))
+             fail)]))]
+
+      ;; default mismatch
+      [else (fail (append (flatten-leaf1 tree1) (flatten-leaf1 tree2)))])))
 
 
+;; Helper to flatten all leaves from two subtrees into a single list
+(define (flatten-leaves t1 t2)
+  (append (flatten-leaf1 t1) (flatten-leaf1 t2)))
+
+(define (flatten-leaf1 t)
+  (cond
+    [(null? t) '()]
+    [(pair? t) (append (flatten-leaf1 (car t)) (flatten-leaf1 (cdr t)))]
+    [else (list t)]))
+
+
+;; Flatten a (possibly nested) list into a flat list of leaves
+(define (flatten-leaf-list t)
+  (cond
+    [(null? t) '()]
+    [(pair? t) (append (flatten-leaf-list (car t)) (flatten-leaf-list (cdr t)))]
+    [else (list t)]))
+
+;; Drop the first n elements from a list
+(define (drop lst n)
+  (if (or (zero? n) (null? lst))
+      lst
+      (drop (cdr lst) (- n 1))))
 
 ;;; Q4.1
 
@@ -152,3 +201,4 @@
   (lambda (x)
     (diag (sqrt-with x x)))
 )
+
